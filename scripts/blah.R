@@ -42,3 +42,12 @@ ggplot(data = summarySan, mapping = aes(x = longitude, y = latitude, color = avg
   facet_wrap(~month)+
   geom_sf()
 
+##looking at Livermore-Rincon for all parameters
+sanFranLiver <- sanFran %>%
+  filter(location == "Livermore-Rincon")
+
+ggplot(data = sanFranLiver, mapping = aes(x = utc, y = value))+
+  geom_point()+
+  geom_smooth(span = .1)+
+  facet_wrap(~parameter)
+
