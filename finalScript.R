@@ -37,7 +37,8 @@ ggplot(data = sanfran25, mapping = aes(x = utc, y = value, color = location))+
   geom_smooth(span = .4, se = F)
 
 #finding peak dates----
-searching <- smallTime %>%
+searching <- sanfran25 %>%
+  filter(utc > "2020-08-10 03:00" & utc < "2020-09-10 03:00") %>%
   filter(location == 'Redwood City') #switched the location to find peak
 
 ggplot(data = searching, mapping = aes(x = utc, y = value))+
@@ -69,11 +70,49 @@ fun%>%
   full_join(latLocation) -> orderOfMonitors
 
 ggplot(data = orderOfMonitors)+
-  geom_point(mapping = aes(x = latitudeMode, y = peakdates))
+  geom_point(mapping = aes(y = latitudeMode, x = peakdates, color = location), size = 4)+
+  theme(axis.text.x = element_text(angle=45, hjust=1))+
+  labs(y='South - North',
+       x='Date of Peak PM2.5',
+       title = 'Was there smoke coming from the North?')
 
 #testing west theory----
 fun %>%
   full_join(longLocation) -> orderOfMonitors2
 
 ggplot(data = orderOfMonitors2)+
-  geom_point(mapping = aes(x = longitudeMode, y = peakdates))
+  geom_point(size = 4, mapping = aes(x = longitudeMode, y = peakdates,color = location))+
+  labs(x='West-East',
+       y='Date of Peak PM2.5',
+       title = 'Was there smoke coming from the West?')
+
+#map gif libraries----
+library("rnaturalearth")
+library("rnaturalearthdata")
+library("RColorBrewer")
+
+#adding fixed color Scale----
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+sc <- scale_colour_gradientn(colours = myPalette(100), limits=c(0, 6))
+
+#fire coordinate for ref----
+fire <- data.frame(latitude = c(39.659), longitude = c(-122.809))
+
+#reading in county map----
+caCounties <- st_read('data/CACounty/geo_export_855ac6f6-d8fb-4ea4-956d-ab7edbd84204.shp')
+
+
+#mannually itterated to make gif----
+sanfran25%>%
+  filter(utc > "2020-08-16 03:00" & utc < "2020-08-29 03:00")%>%
+  mutate(day = day(utc),
+         logValue = log(abs(value))) %>%
+  filter(day == "28")->searchingMap #heres where I changed the day
+
+ggplot()+
+  geom_sf(data = caCounties)+
+  geom_point(data = searchingMap, mapping = aes(x = longitude, y = latitude, color = logValue), size = 4)+
+  labs(title = '08/28/20') #also changed here
+#+facet_wrap(~day)
+#geom_point(data = fire, mapping = aes(x = longitude, y = latitude), color = 'red', size = 5)
+
